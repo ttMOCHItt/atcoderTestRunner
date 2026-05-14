@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup as BS
 import subprocess
 import sys
+import os
 
 if len(sys.argv) < 3:
     sys.exit("使用方法：[python atCoderCheck.py <問題URL> <回答ファイル>]")
@@ -15,6 +16,9 @@ try:
 except Exception as e:
     sys.exit(f"エラー: URLへのアクセスに失敗しました。({e})")
 
+if not os.path.exists(target_file):
+    sys.exit(f"エラー: 指定されたファイル '{target_file}' が現在のディレクトリに見つかりません。")
+
 soup = BS(html.content, "html.parser")
 h3_tags = soup.find_all("h3")
 
@@ -25,8 +29,13 @@ for h3 in h3_tags:
     label = h3.get_text()
     
     if "Sample Input" in label:
-        temp_input = h3.find_next("pre").get_text().strip() + "\n"
-            
+        pre_tag=h3.find_next("pre")
+        raw_content=pre_tag.get_text()
+        lines=raw_content.splitlines()
+        cleaned_lines=[line.strip() for line in lines if line.strip()]
+
+        temp_input="\n".join(cleaned_lines)+"\n"
+
     elif "Sample Output" in label:
         temp_output = h3.find_next("pre").get_text().strip()
         test_cases.append({
@@ -55,13 +64,27 @@ for i, case in enumerate(test_cases, 1):
         )
         
         actual = res.stdout.strip()
+        error_msg = res.stderr.strip()
 
-        if actual == expected:
-            print(f"Case {i}: AC")
-        else:
-            print(f"Case {i}: WA")
-            print(f" [解答]:{expected}")
-            print(f" [あなたの出力]:{actual}")
+        if error_msg:
+            print(f"Runtime Error: {error_msg}")
+        
+        try:
+            actual_val=float(actual)
+            expected_value=float(expected)
+            if abs(actual_val-expected_value)<1e-9:
+                print(f"-CASE {i}: AC")
+            else:
+                print(f"-CASE {i}: WA")
+        except ValueError:
+            if actual == expected:
+                print(f"-CASE {i}: AC")
+            else:
+                print(f"-CASE {i}: WA")
+                
+                print(f"[入力]:\n{in_data}")
+                print(f"[期待される出力]:\n{expected}")
+                print(f"[あなたの出力]:\n{actual}")
             
     except subprocess.TimeoutExpired:
         print(f"Case {i}: TLE (Timeout)")
