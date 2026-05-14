@@ -29,6 +29,21 @@ pip install requests beautifulsoup4
 2. 同じフォルダ内に`atcheck.bat`を保存します。
 3. `C:\tools` をシステムの環境変数**Path**に追加してください。
 
+### 3. 実行権限の許可（Windowsで動かない場合）
+
+Windowsの初期設定では、自作スクリプトの実行が制限されている場合があります。一般権限のPowerShellで実行した際にエラーが出る場合は、以下の手順を一度だけ実行してください。
+
+1. 管理者権限でPowerShellを開きます。
+2. 以下のコマンドを実行します。
+
+```PowerShell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+3. `[Y] はい` を選択して Enter を押します。
+
+これにより、現在のユーザーに対してローカルにある自作スクリプトの実行が許可されます。
+
 ## 使い方
 
 回答コード（例`main.py`）があるディレクトリで、以下のコマンドを実行します。
