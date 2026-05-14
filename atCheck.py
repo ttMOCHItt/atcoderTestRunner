@@ -5,7 +5,7 @@ import sys
 import os
 
 if len(sys.argv) < 3:
-    sys.exit("使用方法：[python atCoderCheck.py <問題URL> <回答ファイル>]")
+    sys.exit("使用方法：[atcheck <問題URL> <回答ファイル>]")
 
 url = sys.argv[1]
 target_file = sys.argv[2]
@@ -48,6 +48,8 @@ total_cases = len(test_cases)
 if total_cases == 0:
     sys.exit("エラー: 入出力例が見つかりませんでした。URLが正しいか確認してください。")
 
+
+#acTest
 print(f"--- Loaded {total_cases} cases. Testing for [{target_file}] ---")
 
 for i, case in enumerate(test_cases, 1):
@@ -71,11 +73,15 @@ for i, case in enumerate(test_cases, 1):
         
         try:
             actual_val=float(actual)
-            expected_value=float(expected)
-            if abs(actual_val-expected_value)<1e-9:
+            expected_val=float(expected)
+            if abs(actual_val-expected_val)<1e-9:
                 print(f"-CASE {i}: AC")
             else:
                 print(f"-CASE {i}: WA")
+
+                print(f"[入力]:\n{in_data}")
+                print(f"[期待される出力]:\n{expected}")
+                print(f"[あなたの出力]:\n{actual}")
         except ValueError:
             if actual == expected:
                 print(f"-CASE {i}: AC")
