@@ -25,27 +25,19 @@ def save_session(session):
 
 
 def login(session):
-    print("コンテスト中の問題はログインしないと取得できません。AtCoderアカウントでログインします。")
-    username = input("Username: ")
-    password = getpass.getpass("Password: ")
+    print("コンテスト中の問題はログインしないと取得できません。")
+    print("ブラウザでAtCoderにログインした状態で、開発者ツール(F12) > Application(またはStorage) > Cookies")
+    print("> https://atcoder.jp から REVEL_SESSION の値をコピーして貼り付けてください。")
+    revel_session = getpass.getpass("REVEL_SESSION: ").strip()
 
-    login_page = session.get("https://atcoder.jp/login")
-    soup = BS(login_page.text, "html.parser")
-    csrf_input = soup.find("input", attrs={"name": "csrf_token"})
-    if csrf_input is None:
-        sys.exit("エラー: ログインページの取得に失敗しました。")
+    if not revel_session:
+        sys.exit("エラー: REVEL_SESSIONが入力されませんでした。")
 
-    res = session.post(
-        "https://atcoder.jp/login",
-        data={
-            "username": username,
-            "password": password,
-            "csrf_token": csrf_input["value"],
-        },
-    )
+    session.cookies.set("REVEL_SESSION", revel_session, domain="atcoder.jp", path="/")
 
-    if "Sign Out" not in res.text:
-        sys.exit("エラー: ログインに失敗しました。ユーザー名かパスワードを確認してください。")
+    check = session.get("https://atcoder.jp/home")
+    if 'href="/login"' in check.text:
+        sys.exit("エラー: ログインに失敗しました。コピーしたCookieの値を確認してください。")
 
     save_session(session)
     print("ログインに成功しました。")
@@ -90,21 +82,24 @@ session = load_session()
 try:
     html = session.get(url)
     html.raise_for_status()
-except Exception as e:
-    sys.exit(f"エラー: URLへのアクセスに失敗しました。({e})")
+    test_cases = parse_test_cases(html.content)
+    if len(test_cases) == 0:
+        raise ValueError("no sample cases found")
+except Exception:
+    answer = input("ページを取得できないか、サンプルがありません。コンテスト中で未ログインの可能性があります。ログインしますか？(y/N): ")
+    if answer.lower() != "y":
+        sys.exit("エラー: 入出力例が見つかりませんでした。URLが正しいか確認してください。")
+
+    login(session)
+    try:
+        html = session.get(url)
+        html.raise_for_status()
+    except Exception as e:
+        sys.exit(f"エラー: URLへのアクセスに失敗しました。({e})")
+    test_cases = parse_test_cases(html.content)
 
 if not os.path.exists(target_file):
     sys.exit(f"エラー: 指定されたファイル '{target_file}' が現在のディレクトリに見つかりません。")
-
-test_cases = parse_test_cases(html.content)
-
-if len(test_cases) == 0:
-    answer = input("サンプルが取得できませんでした。コンテスト中で未ログインの可能性があります。ログインしますか？(y/N): ")
-    if answer.lower() == "y":
-        login(session)
-        html = session.get(url)
-        html.raise_for_status()
-        test_cases = parse_test_cases(html.content)
 
 total_cases = len(test_cases)
 
